@@ -23,17 +23,25 @@ A long investigation eliminated the obvious suspects one by one:
 - **Data Fabric / C-state / power settings** — no effect.
 - **SWIOTLB bounce buffering** — the kernel message was a dormant fallback;
   `io_tlb_used=0`, so it was not actually bouncing.
-- **Linux-specific?** No — a **Windows** cross-check (WinSAT / transfer tests)
-  showed the **same catastrophic DRAM collapse**, proving it's a
-  hardware/firmware problem, not an OS issue.
+- **Linux-specific?** No — a **Windows** cross-check showed the **same
+  catastrophic DRAM collapse**, proving it's a hardware/firmware problem, not an
+  OS issue. The Windows measurements used the scripts in
+  [`tools/windows/`](../tools/windows/):
+  - [`winsat_mem.ps1`](../tools/windows/winsat_mem.ps1) — Windows' official
+    WinSAT memory benchmark (neutral, non-custom): ~3,368 MB/s throttled vs
+    51,716 MB/s (MemoryScore 8.7) once all 8 DIMMs had a fan — a ~15× swing.
+  - [`mem_bw.ps1`](../tools/windows/mem_bw.ps1) — the same cache-vs-DRAM scan as
+    `mem_bw.py`, showing cache fast / DRAM collapsed.
+  - [`mem_heatload.ps1`](../tools/windows/mem_heatload.ps1) — the sustained load
+    that made the throttling visible over time (see below).
 
 ## The key measurement
 
 The breakthrough was measuring **system DRAM bandwidth directly**, separately
-from cache, with [`tools/mem_bw.py`](../tools/mem_bw.py):
+from cache, with [`tools/linux/mem_bw.py`](../tools/linux/mem_bw.py):
 
 ```bash
-python tools/mem_bw.py
+python tools/linux/mem_bw.py
 ```
 
 This distinguishes:

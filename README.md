@@ -37,16 +37,33 @@ Full write-ups:
 
 ## Diagnostic tools
 
-Standalone scripts (only need `torch` + `numpy`) in [`tools/`](tools/):
+### Linux — [`tools/linux/`](tools/linux/) (needs `torch` + `numpy`)
 
 | Script | Purpose |
 |--------|---------|
-| [`tools/p2p_repro.py`](tools/p2p_repro.py) | Minimal reproduction of the GPU→GPU P2P corruption (problem 1). Isolates the bug without booting ComfyUI. |
-| [`tools/pcie_bw.py`](tools/pcie_bw.py) | PCIe host↔GPU bandwidth + link/IOMMU report, optional P2P integrity/bandwidth (`--p2p`). |
-| [`tools/mem_bw.py`](tools/mem_bw.py) | System DRAM vs cache bandwidth (problem 2 — surfaces the thermal collapse). |
+| [`tools/linux/p2p_repro.py`](tools/linux/p2p_repro.py) | Minimal reproduction of the GPU→GPU P2P corruption (problem 1). Isolates the bug without booting ComfyUI. |
+| [`tools/linux/pcie_bw.py`](tools/linux/pcie_bw.py) | PCIe host↔GPU bandwidth + link/IOMMU report, optional P2P integrity/bandwidth (`--p2p`). |
+| [`tools/linux/mem_bw.py`](tools/linux/mem_bw.py) | System DRAM vs cache bandwidth (problem 2 — surfaces the thermal collapse). |
 
 ```bash
-python tools/p2p_repro.py            # is P2P silently corrupt?
-python tools/pcie_bw.py --p2p        # link speed + H2D/D2H/P2P bandwidth + integrity
-python tools/mem_bw.py               # DRAM vs cache bandwidth
+python tools/linux/p2p_repro.py      # is P2P silently corrupt?
+python tools/linux/pcie_bw.py --p2p  # link speed + H2D/D2H/P2P bandwidth + integrity
+python tools/linux/mem_bw.py         # DRAM vs cache bandwidth
+```
+
+### Windows — [`tools/windows/`](tools/windows/) (built-in PowerShell, no deps)
+
+These are the memory tests used for the Windows cross-check that proved the DRAM
+collapse was hardware/firmware, not Linux-specific.
+
+| Script | Purpose |
+|--------|---------|
+| [`tools/windows/mem_bw.ps1`](tools/windows/mem_bw.ps1) | Cache-vs-DRAM bandwidth scan (Windows twin of `mem_bw.py`). Small buffers = cache, large = DRAM. |
+| [`tools/windows/mem_heatload.ps1`](tools/windows/mem_heatload.ps1) | Sustained multi-minute load with per-interval bandwidth — **the script that surfaced the thermal collapse**. Watch DIMM temps alongside it. |
+| [`tools/windows/winsat_mem.ps1`](tools/windows/winsat_mem.ps1) | Runs Windows' official WinSAT memory benchmark (elevated) and parses the MB/s + score — a neutral, non-custom confirmation. |
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\windows\mem_bw.ps1
+powershell -ExecutionPolicy Bypass -File tools\windows\mem_heatload.ps1 -Label "no fan"
+powershell -ExecutionPolicy Bypass -File tools\windows\winsat_mem.ps1 -Name all8-fan
 ```
