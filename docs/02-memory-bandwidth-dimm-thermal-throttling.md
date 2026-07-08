@@ -80,17 +80,44 @@ sustained load.
 
 ## Verification — AFTER cooling
 
-`python tools/mem_bw.py`:
+`python tools/linux/mem_bw.py`:
 - cache: **~92.5 GiB/s**
 - DRAM 1 thread: **31.4 GiB/s**
 - DRAM 4 thread: **56.9 GiB/s**
 - DRAM 8 thread: **69.6 GiB/s**
 
-`python tools/pcie_bw.py --p2p`:
+`python tools/linux/pcie_bw.py --p2p`:
 - H2D / D2H: **~25–26 GB/s** on both GPUs
 - P2P integrity OK, P2P bandwidth **~24.8 GB/s**
 
 Async offloading now performs as expected and stays fast under sustained load.
+
+## Update — CPU upgrade 5955WX → 5995WX
+
+Later the CPU was swapped from a **5955WX (16-core, 2 CCDs)** to a **5995WX
+(64-core, 8 CCDs)**, same board / RAM / cooling. More CCDs means far more GMI
+(Infinity Fabric) bandwidth from the core complexes to the I/O die, so aggregate
+multi-threaded DRAM bandwidth roughly **doubled**. Single-thread and cache
+numbers are unchanged, as expected — those are per-core / latency-bound, not
+limited by fabric width.
+
+`python tools/linux/mem_bw.py`:
+
+| Metric | 5955WX (cooled) | 5995WX |
+|---|---|---|
+| cache | 92.5 GiB/s | 94.7 GiB/s |
+| DRAM 1 thread | 31.4 GiB/s | 31.3 GiB/s |
+| DRAM 4 thread | 56.9 GiB/s | **101.1 GiB/s** |
+| DRAM 8 thread | 69.6 GiB/s | **134.3 GiB/s** |
+
+`python tools/linux/pcie_bw.py --p2p` (unchanged — link-bound):
+- H2D 23–26 GB/s, D2H ~26 GB/s on both GPUs, Gen4 x16 under load
+- P2P integrity OK, P2P bandwidth **~24.6 GB/s**, IOMMU domain `identity`
+- `iommu=pt` still active, so the problem-1 P2P fix remains intact
+
+No regressions from the swap; the higher DRAM bandwidth directly benefits async
+offloading throughput. (GPU1 may show a Gen2 idle link in the report — that's
+ASPM power-down; it ramps to Gen4 x16 under load.)
 
 ## Takeaways
 

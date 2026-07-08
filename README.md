@@ -14,7 +14,7 @@ slow host↔GPU transfers, this may save you a week.
 
 | Component     | Detail                                                        |
 |---------------|---------------------------------------------------------------|
-| CPU           | AMD Ryzen Threadripper PRO 5955WX                             |
+| CPU           | AMD Ryzen Threadripper PRO 5955WX (16-core; later upgraded to 5995WX, 64-core) |
 | Motherboard   | ASUS Pro WS WRX80E-SAGE SE WIFI II                            |
 | GPUs          | 2× NVIDIA RTX PRO 6000 (Blackwell), each on a PCIe riser      |
 | Memory        | 8× Samsung M386A8K40BM2-CTD — 64 GB quad-rank DDR4-2667 LRDIMM (512 GB) |
